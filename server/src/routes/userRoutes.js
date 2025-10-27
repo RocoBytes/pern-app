@@ -6,22 +6,23 @@ import {
   updateUser,
   deleteUser,
 } from '../controllers/userController.js';
+import { authenticateToken } from '../middleware/authenticateToken.js';
 
 const router = express.Router();
 
-// GET /api/users - Obtener todos los usuarios
-router.get('/', getAllUsers);
+// GET /api/users - Obtener todos los usuarios (protegida)
+router.get('/', authenticateToken, getAllUsers);
 
-// GET /api/users/:id - Obtener un usuario por ID
-router.get('/:id', getUserById);
+// GET /api/users/:id - Obtener un usuario por ID (protegida)
+router.get('/:id', authenticateToken, getUserById);
 
-// POST /api/users - Crear un nuevo usuario
-router.post('/', createUser);
+// POST /api/users - Crear un nuevo usuario (protegida)
+router.post('/', authenticateToken, createUser);
 
-// PUT /api/users/:id - Actualizar un usuario
-router.put('/:id', updateUser);
+// PUT /api/users/:id - Actualizar un usuario (protegida)
+router.put('/:id', authenticateToken, updateUser);
 
-// DELETE /api/users/:id - Eliminar un usuario
-router.delete('/:id', deleteUser);
+// DELETE /api/users/:id - Eliminar un usuario (protegida)
+router.delete('/:id', authenticateToken, deleteUser);
 
 export default router;

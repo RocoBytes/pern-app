@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-
-function UsersNew() {
+function Login() {
   const navigate = useNavigate();
-  const { token, logout } = useAuth();
+  const { login } = useAuth();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -28,25 +26,10 @@ function UsersNew() {
     setError(null);
 
     try {
-      console.log('➕ Creating user:', formData.email);
-      await axios.post(`${API_URL}/api/users`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log('✅ User created successfully');
-      navigate('/');
+      await login(formData.email, formData.password);
+      navigate('/'); // Redirigir al home después de login exitoso
     } catch (err) {
-      console.error('❌ Error creating user:', err);
-
-      // Si el token expiró o es inválido, cerrar sesión
-      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        logout();
-        return;
-      }
-
-      setError(err.response?.data?.message || 'Error creating user');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -54,9 +37,9 @@ function UsersNew() {
 
   return (
     <div className="form-container">
-      <h2>Create New User</h2>
+      <h2>Login</h2>
       {error && <div className="error">{error}</div>}
-
+      
       <form onSubmit={handleSubmit} className="user-form">
         <div className="form-group">
           <label htmlFor="email">Email:</label>
@@ -67,10 +50,9 @@ function UsersNew() {
             value={formData.email}
             onChange={handleChange}
             required
-            disabled={loading}
           />
         </div>
-
+        
         <div className="form-group">
           <label htmlFor="password">Password:</label>
           <input
@@ -80,27 +62,21 @@ function UsersNew() {
             value={formData.password}
             onChange={handleChange}
             required
-            minLength={6}
-            disabled={loading}
           />
         </div>
-
+        
         <div className="form-actions">
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Creating...' : 'Create User'}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="btn btn-secondary"
-            disabled={loading}
-          >
-            Cancel
+          <button type="submit" disabled={loading} className="btn btn-primary">
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </div>
       </form>
+      
+      <p style={{ marginTop: '1rem', textAlign: 'center' }}>
+        Don't have an account? <Link to="/register">Register here</Link>
+      </p>
     </div>
   );
 }
 
-export default UsersNew;
+export default Login;
