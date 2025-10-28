@@ -40,7 +40,7 @@ function Login() {
   return (
     <div className="login-container">
       <div className="form-container">
-        <h2>Login</h2>
+        <h2>Iniciar Sesión</h2>
         
         {/* Mostrar error si existe */}
         {error && (
@@ -52,14 +52,14 @@ function Login() {
         <form onSubmit={handleSubmit} className="user-form">
           {/* Campo Email */}
           <div className="form-group">
-            <label htmlFor="email">Email:</label>
+            <label htmlFor="email">Correo:</label>
             <input
               type="email"
               id="email"
               name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="Ingrese su correo"
               required
               autoComplete="email"
               disabled={loading}
@@ -68,14 +68,14 @@ function Login() {
           
           {/* Campo Password */}
           <div className="form-group">
-            <label htmlFor="password">Password:</label>
+            <label htmlFor="password">Contraseña:</label>
             <input
               type="password"
               id="password"
               name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Ingrese su contraseña"
               required
               autoComplete="current-password"
               disabled={loading}
@@ -89,16 +89,16 @@ function Login() {
               disabled={loading} 
               className="btn btn-primary"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? 'Logging in...' : 'Iniciar Sesión'}
             </button>
           </div>
         </form>
         
         {/* Link para registro */}
         <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-          Don't have an account?{' '}
+          No tienes una cuenta?{' '}
           <Link to="/register" style={{ color: '#3498db', textDecoration: 'underline' }}>
-            Register here
+            Registrate aquí
           </Link>
         </p>
       </div>

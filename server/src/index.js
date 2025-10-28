@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import processRoutes from './routes/processRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Cargar variables de entorno
@@ -40,6 +41,9 @@ app.use('/api/auth', authRoutes);
 
 // Rutas de usuarios
 app.use('/api/users', userRoutes);
+
+// Rutas de procesos
+app.use('/api/processes', processRoutes);
 
 // Middleware de manejo de errores (debe ir al final)
 app.use(errorHandler);

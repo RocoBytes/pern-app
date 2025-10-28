@@ -15,8 +15,10 @@ function Layout() {
       <nav className="navbar">
         <h1>PERN App</h1>
         <ul>
-          <li><Link to="/">Home</Link></li>
-          <li><Link to="/users/new">New User</Link></li>
+          <li><Link to="/">Dashboard</Link></li>
+          <li><Link to="/users">Users</Link></li>
+          <li><Link to="/crear-proceso">Crear Proceso</Link></li>
+          <li><Link to="/consultar-procesos">Consultar Procesos</Link></li>
           {user && (
             <>
               <li style={{ color: 'white' }}>👤 {user.email}</li>
