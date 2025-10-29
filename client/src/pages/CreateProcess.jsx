@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Form, Button, Container, Card, Alert } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -98,119 +99,129 @@ function CreateProcess() {
   };
 
   return (
-    <div className="form-container">
-      <div className="form-header">
-        <h2>Crear Nuevo Proceso</h2>
-        <Link to="/" className="btn btn-secondary btn-small">
-          ← Volver al Dashboard
-        </Link>
-      </div>
+    <Container className="mt-4" style={{ maxWidth: '600px' }}>
+      <Card>
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <h4 className="mb-0">Crear Nuevo Proceso</h4>
+          <Link to="/">
+            <Button variant="outline-secondary" size="sm">
+              ← Volver
+            </Button>
+          </Link>
+        </Card.Header>
 
-      {/* Mostrar error si existe */}
-      {error && (
-        <div className="error" role="alert">
-          {error}
-        </div>
-      )}
+        <Card.Body>
+          {/* Mostrar error si existe */}
+          {error && (
+            <Alert variant="danger" dismissible onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
 
-      <form onSubmit={handleSubmit} className="user-form">
-        {/* Campo Repertorio */}
-        <div className="form-group">
-          <label htmlFor="repertorio">
-            Repertorio: <span className="required">*</span>
-          </label>
-          <input
-            type="text"
-            id="repertorio"
-            name="repertorio"
-            value={formData.repertorio}
-            onChange={handleChange}
-            placeholder="Ej: REP-2025-001"
-            required
-            disabled={loading}
-            autoFocus
-          />
-        </div>
+          <Form onSubmit={handleSubmit}>
+            {/* Campo Repertorio */}
+            <Form.Group className="mb-3" controlId="formRepertorio">
+              <Form.Label>
+                Repertorio <span className="text-danger">*</span>
+              </Form.Label>
+              <Form.Control
+                type="text"
+                name="repertorio"
+                value={formData.repertorio}
+                onChange={handleChange}
+                placeholder="Ej: REP-2025-001"
+                required
+                disabled={loading}
+                autoFocus
+              />
+            </Form.Group>
 
-        {/* Campo Carátula */}
-        <div className="form-group">
-          <label htmlFor="caratula">Carátula:</label>
-          <input
-            type="text"
-            id="caratula"
-            name="caratula"
-            value={formData.caratula}
-            onChange={handleChange}
-            placeholder="Ej: Compraventa de Inmueble"
-            disabled={loading}
-          />
-        </div>
+            {/* Campo Carátula */}
+            <Form.Group className="mb-3" controlId="formCaratula">
+              <Form.Label>Carátula</Form.Label>
+              <Form.Control
+                type="text"
+                name="caratula"
+                value={formData.caratula}
+                onChange={handleChange}
+                placeholder="Ej: Compraventa de Inmueble"
+                disabled={loading}
+              />
+            </Form.Group>
 
-        {/* Campo Cliente */}
-        <div className="form-group">
-          <label htmlFor="cliente">Cliente:</label>
-          <input
-            type="text"
-            id="cliente"
-            name="cliente"
-            value={formData.cliente}
-            onChange={handleChange}
-            placeholder="Ej: Juan Pérez González"
-            disabled={loading}
-          />
-        </div>
+            {/* Campo Cliente */}
+            <Form.Group className="mb-3" controlId="formCliente">
+              <Form.Label>Cliente</Form.Label>
+              <Form.Control
+                type="text"
+                name="cliente"
+                value={formData.cliente}
+                onChange={handleChange}
+                placeholder="Ej: Juan Pérez González"
+                disabled={loading}
+              />
+            </Form.Group>
 
-        {/* Campo Email Cliente */}
-        <div className="form-group">
-          <label htmlFor="email_cliente">Email Cliente:</label>
-          <input
-            type="email"
-            id="email_cliente"
-            name="email_cliente"
-            value={formData.email_cliente}
-            onChange={handleChange}
-            placeholder="Ej: cliente@example.com"
-            disabled={loading}
-          />
-        </div>
+            {/* Campo Email Cliente */}
+            <Form.Group className="mb-3" controlId="formEmailCliente">
+              <Form.Label>Email Cliente</Form.Label>
+              <Form.Control
+                type="email"
+                name="email_cliente"
+                value={formData.email_cliente}
+                onChange={handleChange}
+                placeholder="Ej: cliente@example.com"
+                disabled={loading}
+              />
+            </Form.Group>
 
-        {/* Nota informativa */}
-        <div className="form-info">
-          <p>
-            ℹ️ El proceso se creará con estado <strong>"Iniciado"</strong> por defecto.
-          </p>
-        </div>
+            {/* Nota informativa */}
+            <Alert variant="info" className="mb-3">
+              <small>
+                ℹ️ El proceso se creará con estado <strong>"Iniciado"</strong> por defecto.
+              </small>
+            </Alert>
 
-        {/* Botones de acción */}
-        <div className="form-actions">
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            disabled={loading}
-          >
-            {loading ? 'Creando...' : 'Crear Proceso'}
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleReset}
-            className="btn btn-secondary"
-            disabled={loading}
-          >
-            Limpiar
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => navigate('/consultar-procesos')}
-            className="btn btn-secondary"
-            disabled={loading}
-          >
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </div>
+            {/* Botones de acción */}
+            <div className="d-flex gap-2">
+              <Button 
+                variant="primary" 
+                type="submit" 
+                disabled={loading}
+                className="flex-grow-1"
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Creando...
+                  </>
+                ) : (
+                  'Crear Proceso'
+                )}
+              </Button>
+              
+              <Button
+                variant="outline-secondary"
+                type="button"
+                onClick={handleReset}
+                disabled={loading}
+              >
+                Limpiar
+              </Button>
+              
+              <Button
+                variant="outline-danger"
+                type="button"
+                onClick={() => navigate('/consultar-procesos')}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 }
 
