@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
+import { Form, Button, Container, Card, Alert } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -8,10 +8,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 function UsersNew() {
   const navigate = useNavigate();
   const { token, logout } = useAuth();
+
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
   });
+
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -28,78 +31,148 @@ function UsersNew() {
     setError(null);
 
     try {
-      console.log('➕ Creating user:', formData.email);
-      await axios.post(`${API_URL}/api/users`, formData, {
+      console.log('👤 Creating new user...');
+
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(formData),
       });
 
-      console.log('✅ User created successfully');
-      navigate('/');
-    } catch (err) {
-      console.error('❌ Error creating user:', err);
+      const data = await response.json();
 
-      // Si el token expiró o es inválido, cerrar sesión
-      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        logout();
-        return;
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          console.log('🔒 Token invalid, logging out');
+          logout();
+          return;
+        }
+        throw new Error(data.message || 'Error al crear el usuario');
       }
 
-      setError(err.response?.data?.message || 'Error creating user');
+      console.log('✅ User created successfully');
+      navigate('/users');
+    } catch (err) {
+      console.error('❌ Error creating user:', err);
+      setError(err.message || 'Error al crear el usuario');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="form-container">
-      <h2>Create New User</h2>
-      {error && <div className="error">{error}</div>}
+    <Container className="mt-4" style={{ maxWidth: '600px' }}>
+      <Card>
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <h4 className="mb-0">Crear Nuevo Usuario</h4>
+          <Link to="/users">
+            <Button variant="outline-secondary" size="sm">
+              ← Volver
+            </Button>
+          </Link>
+        </Card.Header>
 
-      <form onSubmit={handleSubmit} className="user-form">
-        <div className="form-group">
-          <label htmlFor="email">Email:</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            disabled={loading}
-          />
-        </div>
+        <Card.Body>
+          {error && (
+            <Alert variant="danger" dismissible onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
 
-        <div className="form-group">
-          <label htmlFor="password">Password:</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            minLength={6}
-            disabled={loading}
-          />
-        </div>
+          <Alert variant="info" className="mb-3">
+            <small>
+              ℹ️ Solo usuarios autenticados pueden crear nuevas cuentas
+            </small>
+          </Alert>
 
-        <div className="form-actions">
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Creating...' : 'Create User'}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="btn btn-secondary"
-            disabled={loading}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group className="mb-3" controlId="formName">
+              <Form.Label>
+                Nombre <span className="text-danger">*</span>
+              </Form.Label>
+              <Form.Control
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Nombre completo"
+                required
+                disabled={loading}
+                autoFocus
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="formEmail">
+              <Form.Label>
+                Correo Electrónico <span className="text-danger">*</span>
+              </Form.Label>
+              <Form.Control
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="correo@ejemplo.com"
+                required
+                disabled={loading}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="formPassword">
+              <Form.Label>
+                Contraseña <span className="text-danger">*</span>
+              </Form.Label>
+              <Form.Control
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+                disabled={loading}
+                minLength={6}
+              />
+              <Form.Text className="text-muted">
+                Mínimo 6 caracteres
+              </Form.Text>
+            </Form.Group>
+
+            <div className="d-flex gap-2">
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={loading}
+                className="flex-grow-1"
+              >
+                {loading ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Creando...
+                  </>
+                ) : (
+                  'Crear Usuario'
+                )}
+              </Button>
+
+              <Button
+                variant="outline-danger"
+                type="button"
+                onClick={() => navigate('/users')}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 }
 

@@ -1,8 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
+import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
-import Register from './components/Register';
 import Dashboard from './pages/Dashboard';
 import CreateProcess from './pages/CreateProcess';
 import ConsultProcess from './pages/ConsultProcess';
@@ -11,6 +10,7 @@ import UsersNew from './pages/UsersNew';
 import UsersEdit from './pages/UsersEdit';
 import NotFound from './pages/NotFound';
 import { useAuth } from './context/AuthContext';
+import './App.css';
 
 function App() {
   console.log('📱 App component rendering');
@@ -18,12 +18,30 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas públicas */}
+        {/* Ruta pública (solo Login) */}
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         
-        {/* Rutas protegidas */}
-        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        {/* Rutas protegidas con Sidebar */}
+        <Route path="/*" element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+// Layout principal con Sidebar
+function AppLayout() {
+  return (
+    <div className="app-wrapper">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Contenido Principal */}
+      <main className="content-wrapper">
+        <Routes>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="crear-proceso" element={<CreateProcess />} />
@@ -31,12 +49,10 @@ function App() {
           <Route path="users" element={<Home />} />
           <Route path="users/new" element={<UsersNew />} />
           <Route path="users/:id/edit" element={<UsersEdit />} />
-        </Route>
-
-        {/* Ruta 404 */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
 
@@ -49,8 +65,10 @@ function PublicRoute({ children }) {
   if (loading) {
     return (
       <div className="loading-container">
-        <div className="spinner"></div>
-        <p className="loading-text">Loading...</p>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+        <p className="mt-3">Cargando...</p>
       </div>
     );
   }

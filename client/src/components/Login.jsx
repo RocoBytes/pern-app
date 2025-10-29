@@ -1,108 +1,129 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Form, Button, Container, Card, Alert } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
   
-  // Estados para los campos del formulario
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
   
-  // Estados para feedback visual
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Manejar el envío del formulario
-   */
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      // Llamar a la función login del contexto
-      await login(email, password);
+      console.log('🔐 Attempting login...');
       
-      // Si tiene éxito, redirigir al dashboard (o home)
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al iniciar sesión');
+      }
+
+      console.log('✅ Login successful');
+      
+      login(data.token, data.user);
       navigate('/');
     } catch (err) {
-      // Mostrar error al usuario
-      setError(err.message || 'An error occurred during login');
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
+      setError(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="form-container">
-        <h2>Iniciar Sesión</h2>
-        
-        {/* Mostrar error si existe */}
-        {error && (
-          <div className="error" role="alert">
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className="user-form">
-          {/* Campo Email */}
-          <div className="form-group">
-            <label htmlFor="email">Correo:</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ingrese su correo"
-              required
-              autoComplete="email"
-              disabled={loading}
-            />
-          </div>
-          
-          {/* Campo Password */}
-          <div className="form-group">
-            <label htmlFor="password">Contraseña:</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Ingrese su contraseña"
-              required
-              autoComplete="current-password"
-              disabled={loading}
-            />
-          </div>
-          
-          {/* Botón Submit */}
-          <div className="form-actions">
-            <button 
+    <Container className="d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
+      <Card style={{ width: '100%', maxWidth: '400px' }}>
+        <Card.Header className="text-center">
+          <h3 className="mb-0">Notaría 2.0</h3>
+          <p className="text-muted mb-0">Iniciar Sesión</p>
+        </Card.Header>
+
+        <Card.Body>
+          {error && (
+            <Alert variant="danger" dismissible onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+
+          <Form onSubmit={handleSubmit}>
+            <Form.Group className="mb-3" controlId="formEmail">
+              <Form.Label>Correo Electrónico</Form.Label>
+              <Form.Control
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="correo@ejemplo.com"
+                required
+                disabled={loading}
+                autoFocus
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="formPassword">
+              <Form.Label>Contraseña</Form.Label>
+              <Form.Control
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+                disabled={loading}
+              />
+            </Form.Group>
+
+            <Button 
+              variant="primary" 
               type="submit" 
-              disabled={loading} 
-              className="btn btn-primary"
+              disabled={loading}
+              className="w-100"
             >
-              {loading ? 'Logging in...' : 'Iniciar Sesión'}
-            </button>
-          </div>
-        </form>
-        
-        {/* Link para registro */}
-        <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-          No tienes una cuenta?{' '}
-          <Link to="/register" style={{ color: '#3498db', textDecoration: 'underline' }}>
-            Registrate aquí
-          </Link>
-        </p>
-      </div>
-    </div>
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Iniciando sesión...
+                </>
+              ) : (
+                'Iniciar Sesión'
+              )}
+            </Button>
+          </Form>
+        </Card.Body>
+
+        <Card.Footer className="text-center text-muted">
+          <small>Sistema de Gestión de Procesos Notariales</small>
+        </Card.Footer>
+      </Card>
+    </Container>
   );
 }
 
