@@ -10,17 +10,24 @@ const userRoutes = require('./routes/users');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('🚀 INICIANDO SERVIDOR NOTARÍA 2.0');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('📍 Environment:', process.env.NODE_ENV || 'development');
+console.log('📍 Port:', PORT);
+console.log('📍 Frontend URL:', process.env.FRONTEND_URL || 'No configurado');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
 // Seguridad
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS mejorado
+// CORS
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:4173',
-  'https://pern-app-omega.vercel.app', // Tu dominio de Vercel
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -28,20 +35,16 @@ console.log('🌐 CORS - Orígenes permitidos:', allowedOrigins);
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Permitir requests sin origin (Postman, curl, apps móviles)
     if (!origin) {
-      console.log('✅ Request sin origin - permitido');
       return callback(null, true);
     }
     
-    console.log('🔍 Verificando origin:', origin);
-    
     if (allowedOrigins.includes(origin)) {
-      console.log('✅ Origin permitido');
       callback(null, true);
     } else {
-      console.log('❌ Origin bloqueado');
-      callback(null, true); // Cambiado temporalmente para debug
+      // En producción, permitir de todas formas para debug
+      console.log('⚠️  Origin no listado pero permitido:', origin);
+      callback(null, true);
     }
   },
   credentials: true,
@@ -49,16 +52,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Preflight para todas las rutas
 app.options('*', cors());
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Log de requests
+// Log middleware
 app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path}`);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path} - Origin: ${req.headers.origin || 'No origin'}`);
   next();
 });
 
@@ -66,10 +69,29 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.json({ 
     success: true, 
-    message: 'API Notaría 2.0 funcionando',
+    message: '⚖️ API Notaría 2.0 funcionando correctamente',
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
-    cors: allowedOrigins
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      auth: '/api/auth',
+      processes: '/api/processes',
+      users: '/api/users'
+    }
+  });
+});
+
+// Health check
+app.get('/health', async (req, res) => {
+  const { testConnection } = require('./db');
+  const dbOk = await testConnection();
+  
+  res.json({
+    success: true,
+    status: dbOk ? 'healthy' : 'degraded',
+    database: dbOk ? 'connected' : 'disconnected',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -79,7 +101,7 @@ app.use('/api/users', userRoutes);
 
 // 404
 app.use((req, res) => {
-  console.log('❌ 404:', req.path);
+  console.log('❌ 404 - Ruta no encontrada:', req.path);
   res.status(404).json({ 
     success: false, 
     message: 'Ruta no encontrada',
@@ -89,7 +111,11 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('💥 Error:', err.message);
+  console.error('💥 Error no manejado:');
+  console.error('   Path:', req.path);
+  console.error('   Error:', err.message);
+  console.error('   Stack:', err.stack);
+  
   res.status(500).json({ 
     success: false, 
     message: process.env.NODE_ENV === 'production' 
@@ -99,7 +125,11 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-  console.log(`📍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 URL: https://pern-app-3crm.onrender.com`);
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('✅ SERVIDOR INICIADO CORRECTAMENTE');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🌐 URL:', `https://pern-app-3crm.onrender.com`);
+  console.log('📍 Puerto:', PORT);
+  console.log('⏰ Iniciado:', new Date().toISOString());
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 });
