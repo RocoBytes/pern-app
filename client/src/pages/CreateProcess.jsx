@@ -9,7 +9,6 @@ function CreateProcess() {
   const navigate = useNavigate();
   const { token, logout } = useAuth();
 
-  // Estados para los campos del formulario
   const [formData, setFormData] = useState({
     repertorio: '',
     caratula: '',
@@ -17,13 +16,9 @@ function CreateProcess() {
     email_cliente: '',
   });
 
-  // Estados para feedback visual
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Manejar cambios en los inputs
-   */
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -31,15 +26,11 @@ function CreateProcess() {
     });
   };
 
-  /**
-   * Manejar el envío del formulario
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    // Validar que el repertorio no esté vacío
     if (!formData.repertorio.trim()) {
       setError('El repertorio es obligatorio');
       setLoading(false);
@@ -47,9 +38,6 @@ function CreateProcess() {
     }
 
     try {
-      console.log('📝 Creating process:', formData);
-
-      // Hacer POST a la API
       const response = await fetch(`${API_URL}/api/processes`, {
         method: 'POST',
         headers: {
@@ -61,33 +49,23 @@ function CreateProcess() {
 
       const data = await response.json();
 
-      // Si la respuesta no es exitosa
       if (!response.ok) {
-        // Si el token expiró o es inválido (401/403), cerrar sesión
         if (response.status === 401 || response.status === 403) {
-          console.log('🔒 Token invalid, logging out');
           logout();
           return;
         }
-
         throw new Error(data.message || 'Error al crear el proceso');
       }
 
-      console.log('✅ Process created successfully:', data);
-
-      // Navegar a consultar procesos si fue exitoso
       navigate('/consultar-procesos');
     } catch (err) {
-      console.error('❌ Error creating process:', err);
+      console.error('Error al crear proceso:', err);
       setError(err.message || 'Ocurrió un error al crear el proceso');
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Limpiar el formulario
-   */
   const handleReset = () => {
     setFormData({
       repertorio: '',
@@ -111,7 +89,6 @@ function CreateProcess() {
         </Card.Header>
 
         <Card.Body>
-          {/* Mostrar error si existe */}
           {error && (
             <Alert variant="danger" dismissible onClose={() => setError(null)}>
               {error}
@@ -119,7 +96,6 @@ function CreateProcess() {
           )}
 
           <Form onSubmit={handleSubmit}>
-            {/* Campo Repertorio */}
             <Form.Group className="mb-3" controlId="formRepertorio">
               <Form.Label>
                 Repertorio <span className="text-danger">*</span>
@@ -136,7 +112,6 @@ function CreateProcess() {
               />
             </Form.Group>
 
-            {/* Campo Carátula */}
             <Form.Group className="mb-3" controlId="formCaratula">
               <Form.Label>Carátula</Form.Label>
               <Form.Control
@@ -149,7 +124,6 @@ function CreateProcess() {
               />
             </Form.Group>
 
-            {/* Campo Cliente */}
             <Form.Group className="mb-3" controlId="formCliente">
               <Form.Label>Cliente</Form.Label>
               <Form.Control
@@ -162,7 +136,6 @@ function CreateProcess() {
               />
             </Form.Group>
 
-            {/* Campo Email Cliente */}
             <Form.Group className="mb-3" controlId="formEmailCliente">
               <Form.Label>Email Cliente</Form.Label>
               <Form.Control
@@ -175,14 +148,12 @@ function CreateProcess() {
               />
             </Form.Group>
 
-            {/* Nota informativa */}
             <Alert variant="info" className="mb-3">
               <small>
                 ℹ️ El proceso se creará con estado <strong>"Iniciado"</strong> por defecto.
               </small>
             </Alert>
 
-            {/* Botones de acción */}
             <div className="d-flex gap-2">
               <Button 
                 variant="primary" 

@@ -2,25 +2,23 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function ProtectedRoute({ children }) {
-  const { token, user, loading } = useAuth();
-
-  console.log('🔒 ProtectedRoute - Loading:', loading, 'Token:', !!token, 'User:', !!user);
-
+  const { isAuthenticated, loading } = useAuth();
+  
   if (loading) {
     return (
       <div className="loading-container">
-        <div className="spinner"></div>
-        <p className="loading-text">Verifying authentication...</p>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+        <p className="mt-3">Cargando...</p>
       </div>
     );
   }
-
-  if (!token || !user) {
-    console.log('🔒 Not authenticated, redirecting to login');
+  
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
-
-  console.log('✅ Authenticated, rendering protected content');
+  
   return children;
 }
 

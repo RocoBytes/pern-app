@@ -1,162 +1,70 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { createContext, useContext, useState, useEffect } from 'react';
 
-// Crear el contexto de autenticación
-const AuthContext = createContext(null);
-
-// URL base de la API
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-
-/**
- * Decodificar JWT token para obtener el payload
- * @param {string} token - JWT token
- * @returns {object} Payload decodificado
- */
-const decodeToken = (token) => {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error('Error decoding token:', error);
-    return null;
-  }
-};
+const AuthContext = createContext();
 
 /**
  * Proveedor del contexto de autenticación
  */
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   /**
-   * Cargar token desde localStorage al iniciar la app
+   * Cargar usuario y token del localStorage al iniciar
    */
   useEffect(() => {
-    console.log('🔍 AuthProvider: Initializing...');
+    console.log('🔄 AuthProvider: Initializing...');
     const storedToken = localStorage.getItem('token');
-    console.log('🔍 Stored token:', storedToken ? 'Found' : 'Not found');
-    
-    if (storedToken) {
-      const decoded = decodeToken(storedToken);
-      console.log('🔍 Decoded token:', decoded);
-      
-      if (decoded && decoded.exp * 1000 > Date.now()) {
-        console.log('✅ Token is valid');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log('✅ AuthProvider: Found stored credentials', { email: parsedUser.email });
         setToken(storedToken);
-        setUser({
-          userId: decoded.userId,
-          email: decoded.email,
-        });
-      } else {
-        console.log('⚠️ Token expired');
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('❌ AuthProvider: Error parsing stored user', error);
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
+    } else {
+      console.log('ℹ️ AuthProvider: No stored credentials found');
     }
-    
+
     setLoading(false);
-    console.log('✅ AuthProvider: Initialized');
   }, []);
 
   /**
    * Función para iniciar sesión
-   * @param {string} email - Email del usuario
-   * @param {string} password - Contraseña del usuario
-   * @returns {Promise<object>} Datos de respuesta
+   * @param {string} newToken - Nuevo token JWT
+   * @param {object} newUser - Datos del usuario
    */
-  const login = async (email, password) => {
+  const login = (newToken, newUser) => {
+    console.log('🔐 AuthContext: login called', { 
+      hasToken: !!newToken, 
+      hasUser: !!newUser,
+      userEmail: newUser?.email 
+    });
+    
     try {
-      console.log('🔐 Attempting login for:', email);
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password,
-      });
+      if (!newToken || !newUser) {
+        throw new Error('Token y usuario son requeridos');
+      }
 
-      console.log('✅ Login response:', response.data);
-      const { token: newToken, user: userData } = response.data.data;
-
-      // Guardar token en localStorage
+      // Guardar en localStorage
       localStorage.setItem('token', newToken);
-
-      // Decodificar token para obtener información del usuario
-      const decoded = decodeToken(newToken);
-
+      localStorage.setItem('user', JSON.stringify(newUser));
+      
       // Actualizar estado
       setToken(newToken);
-      setUser({
-        userId: decoded.userId,
-        email: decoded.email,
-        ...userData,
-      });
-
-      console.log('✅ Login successful');
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error('❌ Login error:', error);
+      setUser(newUser);
       
-      // Manejar diferentes tipos de errores
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Login failed');
-      } else if (error.request) {
-        throw new Error('No response from server. Please check your connection.');
-      } else {
-        throw new Error('An error occurred during login');
-      }
-    }
-  };
-
-  /**
-   * Función para registrar nuevo usuario
-   * @param {string} email - Email del usuario
-   * @param {string} password - Contraseña del usuario
-   * @returns {Promise<object>} Datos de respuesta
-   */
-  const register = async (email, password) => {
-    try {
-      console.log('📝 Attempting register for:', email);
-      const response = await axios.post(`${API_URL}/api/auth/register`, {
-        email,
-        password,
-      });
-
-      console.log('✅ Register response:', response.data);
-      const { token: newToken, user: userData } = response.data.data;
-
-      // Guardar token en localStorage
-      localStorage.setItem('token', newToken);
-
-      // Decodificar token para obtener información del usuario
-      const decoded = decodeToken(newToken);
-
-      // Actualizar estado
-      setToken(newToken);
-      setUser({
-        userId: decoded.userId,
-        email: decoded.email,
-        ...userData,
-      });
-
-      console.log('✅ Registration successful');
-      return { success: true, data: response.data };
+      console.log('✅ AuthContext: Login successful, token and user saved');
     } catch (error) {
-      console.error('❌ Register error:', error);
-      
-      // Manejar diferentes tipos de errores
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Registration failed');
-      } else if (error.request) {
-        throw new Error('No response from server. Please check your connection.');
-      } else {
-        throw new Error('An error occurred during registration');
-      }
+      console.error('❌ AuthContext: Error during login', error);
+      throw error;
     }
   };
 
@@ -164,13 +72,14 @@ export const AuthProvider = ({ children }) => {
    * Función para cerrar sesión
    */
   const logout = () => {
-    console.log('🚪 Logging out...');
-    // Remover token de localStorage
+    console.log('🚪 AuthContext: logout called');
+    
     localStorage.removeItem('token');
-
-    // Limpiar estado
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
+    
+    console.log('✅ AuthContext: Logout successful');
   };
 
   /**
@@ -178,35 +87,25 @@ export const AuthProvider = ({ children }) => {
    */
   const isAuthenticated = () => {
     const authenticated = !!token && !!user;
-    console.log('🔍 Is authenticated:', authenticated);
+    console.log('🔍 AuthContext: isAuthenticated check', { 
+      authenticated, 
+      hasToken: !!token, 
+      hasUser: !!user 
+    });
     return authenticated;
   };
 
   // Valor del contexto a exportar
   const value = {
-    token,
     user,
+    token,
     loading,
     login,
-    register,
     logout,
     isAuthenticated,
   };
 
-  console.log('🔍 AuthProvider rendering, loading:', loading);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p className="loading-text">Initializing application...</p>
-        </div>
-      ) : (
-        children
-      )}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 /**
@@ -215,11 +114,9 @@ export const AuthProvider = ({ children }) => {
  */
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
-  
   return context;
 };
 

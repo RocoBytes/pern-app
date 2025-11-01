@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { Table, Button, Container, Alert } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+import userService from '../services/userService';
 
 function Home() {
   const { token, logout } = useAuth();
@@ -11,136 +10,163 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔍 Fetching users with token:', token ? 'Present' : 'Missing');
 
-      const response = await axios.get(`${API_URL}/api/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log('✅ Users fetched:', response.data);
-      setUsers(response.data.data);
+      const data = await userService.getUsers(token);
+      setUsers(data.data);
     } catch (err) {
       console.error('❌ Error fetching users:', err);
-
-      // Si el token expiró o es inválido, cerrar sesión
-      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        console.log('🔒 Token invalid, logging out');
+      
+      if (err.message.includes('401') || err.message.includes('403')) {
         logout();
         return;
       }
-
-      setError(err.response?.data?.message || 'Error loading users');
+      
+      setError(err.message || 'Error al cargar los usuarios');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
       return;
     }
 
     try {
-      console.log('🗑️ Deleting user:', id);
-      await axios.delete(`${API_URL}/api/users/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log('✅ User deleted');
-      // Actualizar la lista después de eliminar
-      setUsers(users.filter((user) => user.id !== id));
+      await userService.deleteUser(id, token);
+      setUsers(users.filter(user => user.id !== id));
     } catch (err) {
       console.error('❌ Error deleting user:', err);
-
-      // Si el token expiró o es inválido, cerrar sesión
-      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+      
+      if (err.message.includes('401') || err.message.includes('403')) {
         logout();
         return;
       }
-
-      alert(err.response?.data?.message || 'Error deleting user');
+      
+      alert(err.message || 'Error al eliminar el usuario');
     }
   };
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p className="loading-text">Loading users...</p>
-      </div>
+      <Container className="mt-4 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando usuarios...</span>
+        </div>
+        <p className="mt-3">Cargando usuarios...</p>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <div className="home">
-        <h2>Users</h2>
-        <div className="error" style={{ marginBottom: '1rem' }}>
-          {error}
-        </div>
-        <button onClick={fetchUsers} className="btn btn-primary">
-          Retry
-        </button>
-      </div>
+      <Container className="mt-4">
+        <Alert variant="danger">
+          <Alert.Heading>Error</Alert.Heading>
+          <p>{error}</p>
+          <hr />
+          <div className="d-flex gap-2">
+            <Button onClick={fetchUsers} variant="primary">
+              Reintentar
+            </Button>
+            <Link to="/">
+              <Button variant="secondary">Volver al Dashboard</Button>
+            </Link>
+          </div>
+        </Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="home">
-      <h2>Users</h2>
-      <Link to="/users/new" className="btn btn-primary">
-        Add New User
-      </Link>
+    <Container fluid className="mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Usuarios</h2>
+        <div className="d-flex gap-2">
+          <Button variant="outline-secondary" size="sm" onClick={fetchUsers}>
+            🔄 Actualizar
+          </Button>
+          <Link to="/users/new">
+            <Button variant="primary" size="sm">
+              ➕ Nuevo Usuario
+            </Button>
+          </Link>
+          <Link to="/">
+            <Button variant="outline-secondary" size="sm">
+              ← Dashboard
+            </Button>
+          </Link>
+        </div>
+      </div>
 
       {users.length === 0 ? (
-        <p style={{ marginTop: '2rem', textAlign: 'center', color: '#7f8c8d' }}>
-          No users found. Create your first user!
-        </p>
+        <Alert variant="warning" className="text-center">
+          <h4>👥 No hay usuarios registrados</h4>
+          <p>Crea el primer usuario para comenzar</p>
+          <Link to="/users/new">
+            <Button variant="primary">Crear Usuario</Button>
+          </Link>
+        </Alert>
       ) : (
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Email</th>
-              <th>Created At</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.email}</td>
-                <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                <td>
-                  <Link to={`/users/${user.id}/edit`} className="btn btn-edit">
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="btn btn-delete"
-                  >
-                    Delete
-                  </button>
-                </td>
+        <>
+          <Alert variant="info">
+            Mostrando <strong>{users.length}</strong> usuario(s)
+          </Alert>
+
+          <Table striped bordered hover responsive>
+            <thead className="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Fecha de Creación</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td>{user.id}</td>
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td>
+                    {new Date(user.created_at).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </td>
+                  <td>
+                    <div className="d-flex gap-2 justify-content-center">
+                      <Link to={`/users/${user.id}/edit`}>
+                        <Button variant="warning" size="sm">
+                          ✏️ Editar
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDelete(user.id)}
+                      >
+                        🗑️ Eliminar
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </>
       )}
-    </div>
+    </Container>
   );
 }
 

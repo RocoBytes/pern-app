@@ -26,12 +26,13 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (loading) return;
+    
     setLoading(true);
     setError(null);
 
     try {
-      console.log('🔐 Attempting login...');
-      
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -46,12 +47,17 @@ function Login() {
         throw new Error(data.message || 'Error al iniciar sesión');
       }
 
-      console.log('✅ Login successful');
-      
-      login(data.token, data.user);
-      navigate('/');
+      const token = data.token || data.data?.token;
+      const user = data.user || data.data?.user;
+
+      if (!token || !user) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
+      login(token, user);
+      navigate('/', { replace: true });
     } catch (err) {
-      console.error('❌ Login error:', err);
+      console.error('Error en login:', err);
       setError(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
@@ -84,6 +90,7 @@ function Login() {
                 placeholder="correo@ejemplo.com"
                 required
                 disabled={loading}
+                autoComplete="email"
                 autoFocus
               />
             </Form.Group>
@@ -98,6 +105,7 @@ function Login() {
                 placeholder="••••••••"
                 required
                 disabled={loading}
+                autoComplete="current-password"
               />
             </Form.Group>
 

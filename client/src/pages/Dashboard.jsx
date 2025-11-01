@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Container, Row, Col, Card } from 'react-bootstrap';
+import SimpleBarChart from '../components/SimpleBarChart';
+import SimpleRadialChart from '../components/SimpleRadialChart';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -11,7 +14,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="dashboard-container">
+    <Container fluid className="mt-4">
       <div className="dashboard-header">
         <h1>Menú Principal</h1>
         {user && (
@@ -23,6 +26,30 @@ function Dashboard() {
           </div>
         )}
       </div>
+
+      <Row>
+        <Col md={12} lg={6} className="mb-4">
+          <Card>
+            <Card.Header>
+              <h5 className="mb-0">📊 Procesos por Estado</h5>
+            </Card.Header>
+            <Card.Body>
+              <SimpleBarChart />
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col md={12} lg={6} className="mb-4">
+          <Card>
+            <Card.Header>
+              <h5 className="mb-0">📈 Distribución Radial</h5>
+            </Card.Header>
+            <Card.Body>
+              <SimpleRadialChart />
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
       <div className="dashboard-grid">
         <Link to="/crear-proceso" className="dashboard-card">
@@ -52,7 +79,21 @@ function Dashboard() {
           <p className="stat-number">--</p>
         </div>
       </div>
-    </div>
+
+      {/* Más contenido del dashboard */}
+      <Row>
+        <Col md={12} className="mb-4">
+          <Card>
+            <Card.Header>
+              <h5 className="mb-0">📋 Resumen General</h5>
+            </Card.Header>
+            <Card.Body>
+              <p>Contenido adicional del dashboard...</p>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 }
 
